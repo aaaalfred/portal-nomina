@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: nomina-db
+    environment:
+      POSTGRES_DB: nomina
+      POSTGRES_USER: nomina_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nomina_dev_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nomina_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (para BullMQ)
+  redis:
+    image: redis:7-alpine
+    container_name: nomina-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nomina-backend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nomina_user:${DB_PASSWORD:-nomina_dev_pass}@postgres:5432/nomina
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_this_in_production}
+      STORAGE_PATH: /app/storage
+    volumes:
+      - storage_data:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Worker de procesamiento
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: nomina-worker
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nomina_user:${DB_PASSWORD:-nomina_dev_pass}@postgres:5432/nomina
+      REDIS_URL: redis://redis:6379
+      STORAGE_PATH: /app/storage
+    volumes:
+      - storage_data:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nomina-frontend
+    ports:
+      - "80:80"
+    environment:
+      VITE_API_URL: http://backend:3000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  storage_data:
