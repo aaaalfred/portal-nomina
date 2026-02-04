@@ -38,8 +38,9 @@ function App() {
         
         {user?.type === 'user' && user?.role === 'ADMIN' && (
           <>
+            <Route path="/nominas" element={<NominasDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
+            <Route path="*" element={<Navigate to="/nominas" replace />} />
           </>
         )}
       </Routes>

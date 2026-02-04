@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/auth'
 import api from '../lib/api'
 import { Upload, LogOut, FileText, CheckCircle, XCircle, Clock } from 'lucide-react'
+import CreateBatchModal from '../components/CreateBatchModal'
 
 export default function NominasDashboard() {
   const { user, logout } = useAuthStore()
@@ -94,6 +95,12 @@ export default function NominasDashboard() {
           ))}
         </div>
       </main>
+
+      {/* Modal de Creación de Lote */}
+      <CreateBatchModal 
+        isOpen={showCreateBatch} 
+        onClose={() => setShowCreateBatch(false)} 
+      />
     </div>
   )
 }

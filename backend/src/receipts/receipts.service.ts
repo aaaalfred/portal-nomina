@@ -89,12 +89,23 @@ export class ReceiptsService {
       throw new NotFoundException('Archivo no disponible');
     }
 
-    const filePath = path.join(process.env.STORAGE_PATH || './storage', 'receipts', filename);
-
+    // Files are organized by RFC: storage/receipts/{RFC}/{filename}
+    const storagePath = process.env.STORAGE_PATH || './storage';
+    
+    // Try new structure first (organized by RFC)
+    let filePath = path.join(storagePath, 'receipts', receipt.rfc, filename);
+    
     try {
       await fs.access(filePath);
     } catch {
-      throw new NotFoundException('Archivo no encontrado en el servidor');
+      // Fallback to old structure (flat) for backwards compatibility
+      filePath = path.join(storagePath, 'receipts', filename);
+      
+      try {
+        await fs.access(filePath);
+      } catch {
+        throw new NotFoundException(`Archivo no encontrado en el servidor: ${filename}`);
+      }
     }
 
     return { file: filePath, filename };

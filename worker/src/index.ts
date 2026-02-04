@@ -1,6 +1,6 @@
 import { Worker } from 'bullmq';
 import { config } from 'dotenv';
-import { processB atch } from './processors/batch-processor';
+import { processBatch } from './processors/batch-processor';
 
 config();
 
