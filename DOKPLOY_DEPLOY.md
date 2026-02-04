@@ -1,6 +1,11 @@
 # 🚀 Deploy Portal Nómina en Dokploy
 
-**Última actualización:** 2026-01-30 20:23
+**Última actualización:** 2026-02-03 18:50
+
+**Cambios recientes:**
+- ✅ Fix sistema de descargas: archivos organizados por RFC
+- ✅ Backend y Worker sincronizados con estructura `/receipts/{RFC}/{filename}`
+- ✅ Health checks agregados a todos los servicios
 
 ---
 
@@ -90,12 +95,23 @@ Click "Add Environment Variable" y agrega cada una:
 ```bash
 # Database
 DB_PASSWORD=TU_PASSWORD_SEGURO_AQUI
+DATABASE_URL=postgresql://nomina_user:TU_PASSWORD_SEGURO_AQUI@postgres:5432/nomina
+
+# Redis
+REDIS_URL=redis://redis:6379
 
 # JWT (CRÍTICO - cambiar)
 JWT_SECRET=TU_JWT_SECRET_SUPER_SEGURO_LARGO_ALEATORIO
+JWT_EXPIRES_IN=7d
 
-# Node
+# Backend
+PORT=3002
 NODE_ENV=production
+STORAGE_PATH=/app/storage
+
+# Frontend (debe apuntar al dominio de producción)
+VITE_API_URL=https://nomina.autia.com.mx/api
+# O si tienes subdominio separado: https://api.nomina.autia.com.mx
 
 # Opcional: Storage S3 (si usas S3 en lugar de local)
 # AWS_ACCESS_KEY_ID=...
@@ -128,8 +144,10 @@ Port: 80 (interno del container frontend)
 ```
 Domain: api.nomina.autia.com.mx
 SSL: ✅ Enable
-Port: 3000 (interno del container backend)
+Port: 3002 (interno del container backend)
 ```
+
+**Nota:** El backend corre en puerto 3002 internamente. Si usas un proxy reverso en el frontend, no necesitas exponer este puerto públicamente.
 
 ---
 
